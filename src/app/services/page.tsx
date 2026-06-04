@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -90,7 +91,9 @@ export default function ServicesPage() {
                     </span>
                     <Badge variant="outline">{service.duration}</Badge>
                   </div>
-                  <Button className="mt-4 w-full">Book This Service</Button>
+                  <Link href={`/book?service=${service.id}`}>
+                    <Button className="mt-4 w-full">Book This Service</Button>
+                  </Link>
                 </CardContent>
               </Card>
             );

@@ -22,10 +22,17 @@ export interface Nurse {
   bio: string;
 }
 
+export interface Availability {
+  day: string;
+  slots: string[];
+}
+
 export interface Booking {
   id: string;
   patientName: string;
   nurseName: string;
+  nurseId: string;
+  serviceId: string;
   service: string;
   date: string;
   time: string;
@@ -255,6 +262,58 @@ export const nurses: Nurse[] = [
     avatar: "JW",
     bio: "Reliable and attentive night shift nurse providing overnight monitoring and care.",
   },
+  {
+    id: "7",
+    name: "Fatima Al-Hassan",
+    specialization: "Wound Care",
+    rating: 4.9,
+    reviewCount: 145,
+    hourlyRate: 52,
+    yearsExperience: 9,
+    isVerified: true,
+    isAvailable: true,
+    avatar: "FA",
+    bio: "Certified wound care specialist with expertise in complex wound management and post-surgical recovery.",
+  },
+  {
+    id: "8",
+    name: "Robert Kim",
+    specialization: "Elder Care",
+    rating: 4.7,
+    reviewCount: 92,
+    hourlyRate: 44,
+    yearsExperience: 7,
+    isVerified: true,
+    isAvailable: false,
+    avatar: "RK",
+    bio: "Compassionate elder care nurse with a background in geriatric medicine and dementia support.",
+  },
+  {
+    id: "9",
+    name: "Lisa Martinez",
+    specialization: "Home Patient Care",
+    rating: 4.8,
+    reviewCount: 178,
+    hourlyRate: 46,
+    yearsExperience: 11,
+    isVerified: true,
+    isAvailable: true,
+    avatar: "LM",
+    bio: "Experienced home care nurse skilled in patient assessment, care planning, and family education.",
+  },
+  {
+    id: "10",
+    name: "Omar Nasser",
+    specialization: "Physical Rehabilitation",
+    rating: 4.6,
+    reviewCount: 54,
+    hourlyRate: 50,
+    yearsExperience: 4,
+    isVerified: true,
+    isAvailable: true,
+    avatar: "ON",
+    bio: "Rehabilitation nurse helping patients regain mobility and independence after injuries and surgeries.",
+  },
 ];
 
 export const bookings: Booking[] = [
@@ -262,6 +321,8 @@ export const bookings: Booking[] = [
     id: "B001",
     patientName: "John Smith",
     nurseName: "Sarah Johnson",
+    nurseId: "1",
+    serviceId: "2",
     service: "Elderly Care Assistance",
     date: "2026-06-06",
     time: "09:00 AM",
@@ -273,6 +334,8 @@ export const bookings: Booking[] = [
     id: "B002",
     patientName: "Maria Garcia",
     nurseName: "Michael Chen",
+    nurseId: "2",
+    serviceId: "3",
     service: "Post-Surgery Recovery",
     date: "2026-06-05",
     time: "02:00 PM",
@@ -284,6 +347,8 @@ export const bookings: Booking[] = [
     id: "B003",
     patientName: "Robert Lee",
     nurseName: "David Thompson",
+    nurseId: "4",
+    serviceId: "5",
     service: "IV Therapy",
     date: "2026-06-04",
     time: "10:30 AM",
@@ -295,6 +360,8 @@ export const bookings: Booking[] = [
     id: "B004",
     patientName: "Susan Davis",
     nurseName: "Aisha Patel",
+    nurseId: "5",
+    serviceId: "7",
     service: "Vital Signs Monitoring",
     date: "2026-06-07",
     time: "08:00 AM",
@@ -306,6 +373,8 @@ export const bookings: Booking[] = [
     id: "B005",
     patientName: "John Smith",
     nurseName: "Emily Rodriguez",
+    nurseId: "3",
+    serviceId: "12",
     service: "Pediatric Nursing",
     date: "2026-05-28",
     time: "11:00 AM",
@@ -317,6 +386,8 @@ export const bookings: Booking[] = [
     id: "B006",
     patientName: "Linda Brown",
     nurseName: "Sarah Johnson",
+    nurseId: "1",
+    serviceId: "9",
     service: "Night Shift Nursing",
     date: "2026-06-08",
     time: "09:00 PM",
@@ -405,3 +476,84 @@ export const categories = [
   { id: "monitoring", name: "Monitoring" },
   { id: "support", name: "Support" },
 ];
+
+export const specializations = [
+  "All Specializations",
+  "Elder Care",
+  "Post-Surgery Recovery",
+  "Pediatric Nursing",
+  "IV Therapy",
+  "Chronic Illness Management",
+  "Night Shift Care",
+  "Wound Care",
+  "Home Patient Care",
+  "Physical Rehabilitation",
+];
+
+export const nurseAvailability: Record<string, Availability[]> = {
+  "1": [
+    { day: "Monday", slots: ["09:00 AM", "10:00 AM", "11:00 AM", "02:00 PM", "03:00 PM"] },
+    { day: "Tuesday", slots: ["09:00 AM", "10:00 AM", "11:00 AM"] },
+    { day: "Wednesday", slots: ["02:00 PM", "03:00 PM", "04:00 PM"] },
+    { day: "Thursday", slots: ["09:00 AM", "10:00 AM", "11:00 AM", "02:00 PM"] },
+    { day: "Friday", slots: ["09:00 AM", "10:00 AM"] },
+  ],
+  "2": [
+    { day: "Monday", slots: ["10:00 AM", "11:00 AM", "02:00 PM"] },
+    { day: "Wednesday", slots: ["09:00 AM", "10:00 AM", "11:00 AM", "02:00 PM", "03:00 PM"] },
+    { day: "Friday", slots: ["09:00 AM", "10:00 AM", "11:00 AM"] },
+  ],
+  "3": [
+    { day: "Tuesday", slots: ["09:00 AM", "10:00 AM", "11:00 AM"] },
+    { day: "Thursday", slots: ["02:00 PM", "03:00 PM", "04:00 PM"] },
+    { day: "Saturday", slots: ["09:00 AM", "10:00 AM", "11:00 AM"] },
+  ],
+  "4": [
+    { day: "Monday", slots: ["08:00 AM", "09:00 AM", "10:00 AM"] },
+    { day: "Tuesday", slots: ["08:00 AM", "09:00 AM", "10:00 AM", "02:00 PM"] },
+    { day: "Wednesday", slots: ["08:00 AM", "09:00 AM"] },
+    { day: "Thursday", slots: ["08:00 AM", "09:00 AM", "10:00 AM"] },
+    { day: "Friday", slots: ["08:00 AM", "09:00 AM", "10:00 AM", "02:00 PM", "03:00 PM"] },
+  ],
+  "5": [
+    { day: "Monday", slots: ["09:00 AM", "10:00 AM", "11:00 AM", "02:00 PM", "03:00 PM", "04:00 PM"] },
+    { day: "Tuesday", slots: ["09:00 AM", "10:00 AM"] },
+    { day: "Thursday", slots: ["09:00 AM", "10:00 AM", "11:00 AM"] },
+    { day: "Friday", slots: ["02:00 PM", "03:00 PM", "04:00 PM"] },
+  ],
+  "7": [
+    { day: "Monday", slots: ["09:00 AM", "10:00 AM", "11:00 AM"] },
+    { day: "Tuesday", slots: ["09:00 AM", "10:00 AM", "02:00 PM", "03:00 PM"] },
+    { day: "Wednesday", slots: ["09:00 AM", "10:00 AM", "11:00 AM", "02:00 PM"] },
+    { day: "Thursday", slots: ["02:00 PM", "03:00 PM"] },
+    { day: "Friday", slots: ["09:00 AM", "10:00 AM", "11:00 AM"] },
+  ],
+  "9": [
+    { day: "Monday", slots: ["08:00 AM", "09:00 AM", "10:00 AM", "11:00 AM"] },
+    { day: "Wednesday", slots: ["08:00 AM", "09:00 AM", "10:00 AM"] },
+    { day: "Thursday", slots: ["02:00 PM", "03:00 PM", "04:00 PM"] },
+    { day: "Friday", slots: ["08:00 AM", "09:00 AM"] },
+    { day: "Saturday", slots: ["09:00 AM", "10:00 AM", "11:00 AM"] },
+  ],
+  "10": [
+    { day: "Tuesday", slots: ["10:00 AM", "11:00 AM", "02:00 PM", "03:00 PM"] },
+    { day: "Wednesday", slots: ["10:00 AM", "11:00 AM"] },
+    { day: "Friday", slots: ["10:00 AM", "11:00 AM", "02:00 PM", "03:00 PM"] },
+  ],
+};
+
+export function getNurseById(id: string): Nurse | undefined {
+  return nurses.find((n) => n.id === id);
+}
+
+export function getServiceById(id: string): Service | undefined {
+  return services.find((s) => s.id === id);
+}
+
+export function getBookingById(id: string): Booking | undefined {
+  return bookings.find((b) => b.id === id);
+}
+
+export function getReviewsForNurse(nurseName: string): Review[] {
+  return reviews.filter((r) => r.nurseName === nurseName);
+}

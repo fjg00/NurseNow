@@ -134,7 +134,8 @@ export default function PatientDashboard() {
                 </Card>
               ) : (
                 upcomingBookings.map((booking) => (
-                  <Card key={booking.id}>
+                  <Link key={booking.id} href={`/patient/bookings/${booking.id}`}>
+                  <Card className="hover:shadow-md transition-shadow">
                     <CardContent className="flex items-center justify-between p-6">
                       <div className="flex items-center gap-4">
                         <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
@@ -159,6 +160,7 @@ export default function PatientDashboard() {
                       </div>
                     </CardContent>
                   </Card>
+                  </Link>
                 ))
               )}
             </div>
@@ -166,7 +168,8 @@ export default function PatientDashboard() {
             <h2 className="mt-8 text-lg font-semibold">Past Bookings</h2>
             <div className="mt-4 space-y-4">
               {pastBookings.map((booking) => (
-                <Card key={booking.id} className="opacity-75">
+                <Link key={booking.id} href={`/patient/bookings/${booking.id}`}>
+                <Card className="opacity-75 hover:shadow-md transition-shadow">
                   <CardContent className="flex items-center justify-between p-6">
                     <div className="flex items-center gap-4">
                       <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-sm font-semibold text-muted-foreground">
@@ -190,6 +193,7 @@ export default function PatientDashboard() {
                     </div>
                   </CardContent>
                 </Card>
+                </Link>
               ))}
             </div>
           </div>
