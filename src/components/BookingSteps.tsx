@@ -2,8 +2,8 @@ import { Check } from "lucide-react";
 
 const steps = [
   "Select Service",
-  "Choose Nurse",
   "Schedule",
+  "Choose Nurse",
   "Details",
   "Confirm",
 ];

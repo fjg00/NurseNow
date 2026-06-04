@@ -542,6 +542,22 @@ export const nurseAvailability: Record<string, Availability[]> = {
   ],
 };
 
+export const serviceToSpecializations: Record<string, string[]> = {
+  "1": ["Home Patient Care", "Elder Care"],
+  "2": ["Elder Care", "Home Patient Care"],
+  "3": ["Post-Surgery Recovery", "Wound Care"],
+  "4": ["Chronic Illness Management", "Home Patient Care"],
+  "5": ["IV Therapy", "Wound Care"],
+  "6": ["Wound Care", "IV Therapy", "Post-Surgery Recovery"],
+  "7": ["Chronic Illness Management", "Home Patient Care", "Elder Care"],
+  "8": ["Chronic Illness Management", "Home Patient Care"],
+  "9": ["Night Shift Care", "Elder Care", "Home Patient Care"],
+  "10": ["Home Patient Care", "Elder Care"],
+  "11": ["Post-Surgery Recovery", "Home Patient Care", "Physical Rehabilitation"],
+  "12": ["Pediatric Nursing"],
+  "13": ["Physical Rehabilitation", "Home Patient Care"],
+};
+
 export function getNurseById(id: string): Nurse | undefined {
   return nurses.find((n) => n.id === id);
 }
@@ -556,4 +572,26 @@ export function getBookingById(id: string): Booking | undefined {
 
 export function getReviewsForNurse(nurseName: string): Review[] {
   return reviews.filter((r) => r.nurseName === nurseName);
+}
+
+export function getNursesForService(serviceId: string): Nurse[] {
+  const matchingSpecs = serviceToSpecializations[serviceId] || [];
+  return nurses.filter(
+    (n) => n.isVerified && n.isAvailable && matchingSpecs.includes(n.specialization)
+  );
+}
+
+export function getNursesAvailableAt(nurseList: Nurse[], day: string): Nurse[] {
+  return nurseList.filter((n) => {
+    const avail = nurseAvailability[n.id];
+    if (!avail) return true;
+    return avail.some((a) => a.day === day);
+  });
+}
+
+export function getAvailableSlotsForNurse(nurseId: string, day: string): string[] {
+  const avail = nurseAvailability[nurseId];
+  if (!avail) return ["09:00 AM", "10:00 AM", "11:00 AM", "02:00 PM", "03:00 PM"];
+  const dayAvail = avail.find((a) => a.day === day);
+  return dayAvail?.slots || [];
 }

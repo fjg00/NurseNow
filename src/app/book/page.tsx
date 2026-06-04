@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, useMemo, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
@@ -15,8 +15,22 @@ import {
   Check,
   Star,
   ShieldCheck,
+  Zap,
+  Users,
+  AlertCircle,
 } from "lucide-react";
-import { services, nurses, getNurseById, getServiceById } from "@/lib/mock-data";
+import {
+  services,
+  getNurseById,
+  getServiceById,
+  getNursesForService,
+  getAvailableSlotsForNurse,
+} from "@/lib/mock-data";
+
+function getDayName(dateStr: string): string {
+  const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  return days[new Date(dateStr + "T12:00:00").getDay()];
+}
 
 function BookingFormContent() {
   const searchParams = useSearchParams();
@@ -31,6 +45,7 @@ function BookingFormContent() {
   const [selectedNurseId, setSelectedNurseId] = useState(
     preselectedNurseId || ""
   );
+  const [requestNow, setRequestNow] = useState(false);
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
   const [address, setAddress] = useState("");
@@ -44,16 +59,33 @@ function BookingFormContent() {
     ? getNurseById(selectedNurseId)
     : null;
 
-  const availableNurses = nurses.filter((n) => n.isAvailable && n.isVerified);
+  const dayName = date ? getDayName(date) : "";
 
+  const matchingNurses = useMemo(() => {
+    if (!selectedServiceId) return [];
+    const nurses = getNursesForService(selectedServiceId);
+    if (!dayName) return nurses;
+    return nurses.filter((n) => {
+      const slots = getAvailableSlotsForNurse(n.id, dayName);
+      if (time) return slots.includes(time);
+      return slots.length > 0;
+    });
+  }, [selectedServiceId, dayName, time]);
+
+  const availableTimesForNurse = useMemo(() => {
+    if (!selectedNurseId || !dayName) return [];
+    return getAvailableSlotsForNurse(selectedNurseId, dayName);
+  }, [selectedNurseId, dayName]);
+
+  // New flow: 1=Service, 2=Schedule, 3=Choose Nurse, 4=Details, 5=Confirm
   const canProceed = () => {
     switch (step) {
       case 1:
         return !!selectedServiceId;
       case 2:
-        return !!selectedNurseId;
-      case 3:
         return !!date && !!time;
+      case 3:
+        return requestNow || !!selectedNurseId;
       case 4:
         return !!address && !!phone;
       case 5:
@@ -65,10 +97,13 @@ function BookingFormContent() {
 
   const handleConfirm = () => {
     const bookingId = `B${String(Math.floor(Math.random() * 9000) + 1000)}`;
+    const nurseName = requestNow
+      ? "Auto-assigned (Next Available)"
+      : selectedNurse?.name || "";
     const params = new URLSearchParams({
       id: bookingId,
       service: selectedService?.name || "",
-      nurse: selectedNurse?.name || "",
+      nurse: nurseName,
       date,
       time,
       address,
@@ -88,9 +123,7 @@ function BookingFormContent() {
           Back to Services
         </Link>
 
-        <h1 className="text-2xl font-bold sm:text-3xl mb-2">
-          Book a Nurse
-        </h1>
+        <h1 className="text-2xl font-bold sm:text-3xl mb-2">Book a Nurse</h1>
         <p className="text-muted-foreground mb-8">
           Complete the steps below to schedule your visit
         </p>
@@ -110,7 +143,11 @@ function BookingFormContent() {
                     <button
                       key={service.id}
                       type="button"
-                      onClick={() => setSelectedServiceId(service.id)}
+                      onClick={() => {
+                        setSelectedServiceId(service.id);
+                        setSelectedNurseId("");
+                        setRequestNow(false);
+                      }}
                       className={`rounded-lg border p-4 text-left transition-colors ${
                         selectedServiceId === service.id
                           ? "border-primary bg-primary/5 ring-1 ring-primary"
@@ -136,60 +173,20 @@ function BookingFormContent() {
             </Card>
           )}
 
-          {/* Step 2: Choose Nurse */}
+          {/* Step 2: Schedule (moved before nurse selection) */}
           {step === 2 && (
-            <Card>
-              <CardContent className="p-6">
-                <h2 className="text-lg font-semibold mb-4">Choose a Nurse</h2>
-                <div className="space-y-3">
-                  {availableNurses.map((nurse) => (
-                    <button
-                      key={nurse.id}
-                      type="button"
-                      onClick={() => setSelectedNurseId(nurse.id)}
-                      className={`w-full rounded-lg border p-4 text-left transition-colors ${
-                        selectedNurseId === nurse.id
-                          ? "border-primary bg-primary/5 ring-1 ring-primary"
-                          : "hover:border-primary/50"
-                      }`}
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
-                          {nurse.avatar}
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium">{nurse.name}</span>
-                            <ShieldCheck className="h-4 w-4 text-primary" />
-                          </div>
-                          <p className="text-sm text-muted-foreground">
-                            {nurse.specialization}
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <div className="flex items-center gap-1 text-sm">
-                            <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
-                            {nurse.rating}
-                          </div>
-                          <span className="text-sm font-bold text-primary">
-                            ${nurse.hourlyRate}/hr
-                          </span>
-                        </div>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Step 3: Schedule */}
-          {step === 3 && (
             <Card>
               <CardContent className="p-6">
                 <h2 className="text-lg font-semibold mb-4">
                   Choose Date & Time
                 </h2>
+                <p className="text-sm text-muted-foreground mb-4">
+                  We&apos;ll show you nurses specializing in{" "}
+                  <span className="font-medium text-foreground">
+                    {selectedService?.name}
+                  </span>{" "}
+                  who are available at your chosen time.
+                </p>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div>
                     <Label htmlFor="date">Date</Label>
@@ -197,7 +194,12 @@ function BookingFormContent() {
                       id="date"
                       type="date"
                       value={date}
-                      onChange={(e) => setDate(e.target.value)}
+                      onChange={(e) => {
+                        setDate(e.target.value);
+                        setTime("");
+                        setSelectedNurseId("");
+                        setRequestNow(false);
+                      }}
                       min={new Date().toISOString().split("T")[0]}
                       className="mt-1"
                     />
@@ -207,7 +209,11 @@ function BookingFormContent() {
                     <select
                       id="time"
                       value={time}
-                      onChange={(e) => setTime(e.target.value)}
+                      onChange={(e) => {
+                        setTime(e.target.value);
+                        setSelectedNurseId("");
+                        setRequestNow(false);
+                      }}
                       className="mt-1 flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                     >
                       <option value="">Select a time</option>
@@ -225,14 +231,147 @@ function BookingFormContent() {
                     </select>
                   </div>
                 </div>
-                {selectedNurse && (
+                {date && time && (
                   <p className="mt-4 text-sm text-muted-foreground">
-                    Booking with{" "}
                     <span className="font-medium text-foreground">
-                      {selectedNurse.name}
-                    </span>
+                      {matchingNurses.length}
+                    </span>{" "}
+                    qualified nurse{matchingNurses.length !== 1 ? "s" : ""}{" "}
+                    available on {dayName} at {time}
                   </p>
                 )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Step 3: Choose Nurse (filtered by service + schedule) */}
+          {step === 3 && (
+            <Card>
+              <CardContent className="p-6">
+                <h2 className="text-lg font-semibold mb-1">Choose a Nurse</h2>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Showing nurses who specialize in{" "}
+                  <span className="font-medium text-foreground">
+                    {selectedService?.name}
+                  </span>{" "}
+                  and are available on{" "}
+                  <span className="font-medium text-foreground">
+                    {dayName}, {date}
+                  </span>{" "}
+                  at{" "}
+                  <span className="font-medium text-foreground">{time}</span>
+                </p>
+
+                {/* Request Now Option */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setRequestNow(true);
+                    setSelectedNurseId("");
+                  }}
+                  className={`w-full rounded-lg border p-4 text-left transition-colors mb-3 ${
+                    requestNow
+                      ? "border-primary bg-primary/5 ring-1 ring-primary"
+                      : "border-dashed hover:border-primary/50"
+                  }`}
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-green-100">
+                      <Zap className="h-6 w-6 text-green-600" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">
+                          Request a Nurse Now
+                        </span>
+                        <Badge className="bg-green-100 text-green-800 text-xs">
+                          Fastest
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        We&apos;ll assign the best available nurse for you
+                        automatically
+                      </p>
+                    </div>
+                  </div>
+                </button>
+
+                <div className="relative my-4">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-card px-2 text-muted-foreground">
+                      Or choose a specific nurse
+                    </span>
+                  </div>
+                </div>
+
+                {matchingNurses.length === 0 ? (
+                  <div className="rounded-lg border border-dashed p-6 text-center">
+                    <AlertCircle className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
+                    <p className="text-sm font-medium">
+                      No matching nurses available
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      No nurses with this specialty are available at your
+                      chosen time. Try a different time or use &quot;Request a
+                      Nurse Now&quot; above.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {matchingNurses.map((nurse) => (
+                      <button
+                        key={nurse.id}
+                        type="button"
+                        onClick={() => {
+                          setSelectedNurseId(nurse.id);
+                          setRequestNow(false);
+                        }}
+                        className={`w-full rounded-lg border p-4 text-left transition-colors ${
+                          selectedNurseId === nurse.id
+                            ? "border-primary bg-primary/5 ring-1 ring-primary"
+                            : "hover:border-primary/50"
+                        }`}
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
+                            {nurse.avatar}
+                          </div>
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium">{nurse.name}</span>
+                              <ShieldCheck className="h-4 w-4 text-primary" />
+                            </div>
+                            <p className="text-sm text-muted-foreground">
+                              {nurse.specialization} &middot;{" "}
+                              {nurse.yearsExperience} yrs exp
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <div className="flex items-center gap-1 text-sm">
+                              <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
+                              {nurse.rating}
+                              <span className="text-xs text-muted-foreground">
+                                ({nurse.reviewCount})
+                              </span>
+                            </div>
+                            <span className="text-sm font-bold text-primary">
+                              ${nurse.hourlyRate}/hr
+                            </span>
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                <p className="mt-4 text-xs text-muted-foreground flex items-center gap-1">
+                  <Users className="h-3.5 w-3.5" />
+                  {matchingNurses.length} nurse{matchingNurses.length !== 1 ? "s" : ""}{" "}
+                  matched for this service and time
+                </p>
               </CardContent>
             </Card>
           )}
@@ -241,9 +380,7 @@ function BookingFormContent() {
           {step === 4 && (
             <Card>
               <CardContent className="p-6">
-                <h2 className="text-lg font-semibold mb-4">
-                  Visit Details
-                </h2>
+                <h2 className="text-lg font-semibold mb-4">Visit Details</h2>
                 <div className="space-y-4">
                   <div>
                     <Label htmlFor="address">Address</Label>
@@ -303,12 +440,21 @@ function BookingFormContent() {
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Nurse</span>
                       <span className="font-medium">
-                        {selectedNurse?.name}
+                        {requestNow ? (
+                          <span className="flex items-center gap-1">
+                            <Zap className="h-3.5 w-3.5 text-green-600" />
+                            Auto-assigned (Next Available)
+                          </span>
+                        ) : (
+                          selectedNurse?.name
+                        )}
                       </span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Date</span>
-                      <span className="font-medium">{date}</span>
+                      <span className="font-medium">
+                        {dayName}, {date}
+                      </span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Time</span>
